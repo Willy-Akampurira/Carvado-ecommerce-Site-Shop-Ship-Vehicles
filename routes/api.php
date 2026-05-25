@@ -12,11 +12,17 @@ use App\Http\Controllers\Api\V1\{
 };
 
 Route::prefix('v1')->group(function () {
-    // Public Auth routes
+    // --- Public Routes ---
+    
+    // Original Auth Routes (Plan A)
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
 
-    // Protected routes
+    // Hybrid Auth Route (Plan B)
+    // This allows the Flutter app to "handshake" with Laravel after Firebase sign-up
+    Route::post('sync-firebase-user', [AuthController::class, 'syncFirebaseUser']);
+
+    // --- Protected Routes ---
     Route::middleware('auth:sanctum')->group(function () {
         // Auth management
         Route::post('logout', [AuthController::class, 'logout']);
@@ -26,7 +32,7 @@ Route::prefix('v1')->group(function () {
         Route::put('user', [UserController::class, 'update']);
         Route::delete('user', [UserController::class, 'destroy']);
 
-        // Admin-only user creation (optional)
+        // Admin-only user management
         Route::post('users', [UserController::class, 'store']);
         Route::get('users/{id}', [UserController::class, 'show']);
 

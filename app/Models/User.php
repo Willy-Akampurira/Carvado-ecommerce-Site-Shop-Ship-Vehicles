@@ -5,27 +5,33 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles; // ✅ Add this line
+use Laravel\Sanctum\HasApiTokens; // Required for Flutter/API Authentication
+use Spatie\Permission\Traits\HasRoles; 
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles; // ✅ Add HasRoles here
+    /**
+     * HasApiTokens: Allows Sanctum to generate tokens for your mobile app.
+     * HasRoles: Allows Spatie to manage permissions (Admin, Worker, Client).
+     */
+    use HasApiTokens, HasFactory, Notifiable, HasRoles; 
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'firebase_uid', // 🎯 Added this to allow syncing with Firebase
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',

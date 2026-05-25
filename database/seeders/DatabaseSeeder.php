@@ -9,53 +9,59 @@ use App\Models\User;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the application's database for Carvado.
+     * This focuses only on User and Role setup.
      */
     public function run(): void
     {
-        // Seed Admin
-        User::firstOrCreate(
+        // 1. Create the Roles first (admin, worker, client)
+        $this->call([
+            RoleSeeder::class,
+        ]);
+
+        // 2. Seed Admin
+        $admin = User::firstOrCreate(
             ['email' => 'admin@carvado.com'],
             [
                 'name' => 'Admin User',
                 'password' => Hash::make('password'),
-                'role' => 'admin',
             ]
         );
+        $admin->assignRole('admin');
 
-        // Seed Worker
-        User::firstOrCreate(
+        // 3. Seed Worker
+        $worker = User::firstOrCreate(
             ['email' => 'worker@carvado.com'],
             [
                 'name' => 'Worker One',
                 'password' => Hash::make('password'),
-                'role' => 'worker',
             ]
         );
+        $worker->assignRole('worker');
 
-        // Seed Client
-        User::firstOrCreate(
+        // 4. Seed Client
+        $client = User::firstOrCreate(
             ['email' => 'client@carvado.com'],
             [
                 'name' => 'Client One',
                 'password' => Hash::make('password'),
-                'role' => 'client',
             ]
         );
+        $client->assignRole('client');
 
-        // Seed Test User
-        User::firstOrCreate(
+        // 5. Seed Test User (also as a client)
+        $testUser = User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
                 'name' => 'Test User',
                 'password' => Hash::make('password'),
-                'role' => 'client', // or leave null if role wasn't set before
             ]
         );
+        $testUser->assignRole('client');
 
-        // Seed vehicles
-        $this->call([
-            CarSeeder::class,
-        ]);
+        // 🎯 Note: CarSeeder is commented out to protect your existing car data.
+        // $this->call([
+        //     CarSeeder::class,
+        // ]);
     }
 }
