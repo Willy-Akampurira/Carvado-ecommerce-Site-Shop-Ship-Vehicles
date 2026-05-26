@@ -23,111 +23,63 @@ use App\Http\Middleware\RoleMiddleware;
 
 /*
 |--------------------------------------------------------------------------
-| Public-Facing Routes (Shop & Ship)
+| Public-Facing Routes
 |--------------------------------------------------------------------------
 */
-
-// Landing page
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Shop page — browse available cars
 Route::prefix('shop')->group(function () {
     Route::get('/', [ShopController::class, 'index'])->name('shop.index');
     Route::get('/category', [ShopController::class, 'filterByCategory'])->name('shop.byCategory');
-    Route::get('/{car}', [ShopController::class, 'show'])->name('shop.show'); // ✅ View single car
+    Route::get('/{car}', [ShopController::class, 'show'])->name('shop.show');
 });
 
-// Cart functionality
 Route::prefix('cart')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('cart.index');
     Route::post('/add/{id}', [CartController::class, 'add'])->name('cart.add');
     Route::post('/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
 });
 
-// Checkout flow
 Route::prefix('checkout')->group(function () {
     Route::get('/', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/process', [CheckoutController::class, 'process'])->name('checkout.process');
 });
 
-// Order confirmation & invoice
 Route::prefix('order')->group(function () {
     Route::get('/thankyou', [CheckoutController::class, 'thankyou'])->name('order.thankyou');
     Route::get('/invoice/{id}', [CheckoutController::class, 'invoice'])->name('order.invoice');
 });
 
-// Global Search
 Route::get('/search', [SearchController::class, 'index'])->name('search');
-
-// Contact page
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
 Route::post('/contact/send', [ContactController::class, 'send'])->name('contact.send');
-
-// About page
 Route::get('/about', [AboutController::class, 'index'])->name('about.index');
-
-// Newsletter subscription
 Route::get('/newsletter', [NewsletterController::class, 'showForm'])->name('newsletter.form');
-
-// Legal pages
 Route::get('/terms', [LegalController::class, 'terms'])->name('terms');
 Route::get('/privacy', [LegalController::class, 'privacy'])->name('privacy');
 
 /*
 |--------------------------------------------------------------------------
-| Public User Account Routes
+| Authenticated User Routes
 |--------------------------------------------------------------------------
 */
-
-Route::middleware(['auth'])->prefix('account')->group(function () {
-    Route::get('/', [UserController::class, 'index'])->name('account.index');
-    Route::get('/edit', [UserController::class, 'edit'])->name('account.edit');
-    Route::post('/update', [UserController::class, 'update'])->name('account.update');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Wishlist Public Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth'])->prefix('wishlist')->group(function () {
-    Route::get('/', [WishlistController::class, 'index'])->name('wishlist.index');
-    Route::post('/add/{car}', [WishlistController::class, 'add'])->name('wishlist.add');
-    Route::post('/remove/{car}', [WishlistController::class, 'remove'])->name('wishlist.remove');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Payment Gateway Integration Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('payment')->group(function () {
-    Route::get('/confirmation/{order}/{trackingId?}', function ($order, $trackingId = null) {
-        return view('public.payment-confirmation', compact('order', 'trackingId'));
-    })->name('payment.confirmation');
-
-    Route::get('/status/{trackingId}', [PaymentController::class, 'status'])->name('payment.status');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Dashboard & Auth Routes (Admin Panel)
-|--------------------------------------------------------------------------
-*/
-
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::prefix('account')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('account.index');
+        Route::get('/edit', [UserController::class, 'edit'])->name('account.edit');
+        Route::post('/update', [UserController::class, 'update'])->name('account.update');
+    });
+
+    Route::prefix('wishlist')->group(function () {
+        Route::get('/', [WishlistController::class, 'index'])->name('wishlist.index');
+        Route::post('/add/{car}', [WishlistController::class, 'add'])->name('wishlist.add');
+        Route::post('/remove/{car}', [WishlistController::class, 'remove'])->name('wishlist.remove');
+    });
+
     // 🎯 Role-aware dashboard redirect
     Route::get('/dashboard', function () {
         $user = auth()->user();
-
-        if (!$user) {
-            return redirect()->route('login');
-        }
-
         $role = $user->getRoleNames()->first();
-
         return match ($role) {
             'admin', 'Super Admin' => redirect()->route('admin.dashboard'),
             'worker' => redirect()->route('worker.dashboard'),
@@ -136,7 +88,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         };
     })->name('dashboard');
 
-    // 👤 Profile routes
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/', [ProfileController::class, 'update'])->name('profile.update');
@@ -144,69 +95,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-// Auth scaffolding
-require __DIR__.'/auth.php';
+/*
+|--------------------------------------------------------------------------
+| Role-Protected Dashboards (Admin, Worker, Client)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', RoleMiddleware::class . ':admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+    Route::get('/orders', [AdminController::class, 'orders'])->name('orders');
+    Route::get('/payments', [AdminController::class, 'payments'])->name('payments');
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::get('/inventory', [AdminController::class, 'inventory'])->name('inventory');
+    Route::get('/analytics', [AdminController::class, 'analytics'])->name('analytics');
+    Route::get('/notifications', [AdminController::class, 'notifications'])->name('notifications');
+    Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
+});
+
+Route::middleware(['auth', RoleMiddleware::class . ':worker'])->get('/worker/dashboard', [WorkerController::class, 'index'])->name('worker.dashboard');
+Route::middleware(['auth', RoleMiddleware::class . ':client'])->get('/client/dashboard', [ClientController::class, 'index'])->name('client.dashboard');
 
 /*
 |--------------------------------------------------------------------------
-| Test Routes (Dev Only)
+| System & Auth Routes
 |--------------------------------------------------------------------------
 */
+require __DIR__.'/auth.php';
 
-// ✅ Email test route
+Route::post('/logout', function () {
+    auth()->logout();
+    return redirect('/login');
+})->name('logout');
+
 Route::get('/test-mail', function () {
     Mail::to('willyakampurira741@gmail.com')->send(new CarvadoTestMail('Willy'));
     return 'Test email sent!';
 });
-
-/*Route::get('/', function () {
-    return view('welcome');
-});
-*/
-// Admin Dashboard Routes
-Route::get('/admin/dashboard', [AdminController::class, 'index'])
-    ->middleware(['auth', RoleMiddleware::class . ':admin'])
-    ->name('admin.dashboard');
-
-Route::get('/admin/orders', [AdminController::class, 'orders'])
-    ->middleware(['auth', RoleMiddleware::class . ':admin'])
-    ->name('admin.orders');
-
-Route::get('/admin/payments', [AdminController::class, 'payments'])
-    ->middleware(['auth', RoleMiddleware::class . ':admin'])
-    ->name('admin.payments');
-
-Route::get('/admin/users', [AdminController::class, 'users'])
-    ->middleware(['auth', RoleMiddleware::class . ':admin'])
-    ->name('admin.users');
-
-Route::get('/admin/inventory', [AdminController::class, 'inventory'])
-    ->middleware(['auth', RoleMiddleware::class . ':admin'])
-    ->name('admin.inventory');
-
-Route::get('/admin/analytics', [AdminController::class, 'analytics'])
-    ->middleware(['auth', RoleMiddleware::class . ':admin'])
-    ->name('admin.analytics');
-
-Route::get('/admin/notifications', [AdminController::class, 'notifications'])
-    ->middleware(['auth', RoleMiddleware::class . ':admin'])
-    ->name('admin.notifications');
-
-Route::get('/admin/logs', [AdminController::class, 'logs'])
-    ->middleware(['auth', RoleMiddleware::class . ':admin'])
-    ->name('admin.logs');
-
-// Worker Dashboard
-Route::get('/worker/dashboard', [WorkerController::class, 'index'])
-    ->middleware(['auth', RoleMiddleware::class . ':worker'])
-    ->name('worker.dashboard');
-
-// Client Dashboard
-Route::get('/client/dashboard', [ClientController::class, 'index'])
-    ->middleware(['auth', RoleMiddleware::class . ':client'])
-    ->name('client.dashboard');
-
-Route::post('/logout', function () {
-    auth()->logout();
-    return redirect('/login'); // Redirects to login page after logout
-})->name('logout');
