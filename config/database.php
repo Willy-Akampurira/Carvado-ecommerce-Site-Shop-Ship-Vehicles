@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
+use Pdo\Mysql; // Added for PHP 8.5 compatibility
 
 return [
 
@@ -14,7 +15,7 @@ return [
     | the connection which will be utilized unless another connection
     | is explicitly specified when you execute a query / statement.
     |
-    */
+    | */
 
     'default' => env('DB_CONNECTION', 'sqlite'),
 
@@ -27,7 +28,7 @@ return [
     | An example configuration is provided for each database system which
     | is supported by Laravel. You're free to add / remove connections.
     |
-    */
+    | */
 
     'connections' => [
 
@@ -58,7 +59,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'), // Rectified for PHP 8.5+
             ]) : [],
         ],
 
@@ -78,7 +79,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'), // Rectified for PHP 8.5+
             ]) : [],
         ],
 
@@ -123,7 +124,7 @@ return [
     | your application. Using this information, we can determine which of
     | the migrations on disk haven't actually been run on the database.
     |
-    */
+    | */
 
     'migrations' => [
         'table' => 'migrations',
@@ -139,7 +140,7 @@ return [
     | provides a richer body of commands than a typical key-value system
     | such as Memcached. You may define your connection settings here.
     |
-    */
+    | */
 
     'redis' => [
 
@@ -157,7 +158,7 @@ return [
             'username' => env('REDIS_USERNAME'),
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
-            'database' => env('REDIS_DB', '0'),
+            'database' => env('DB_DATABASE', '0'),
         ],
 
         'cache' => [
