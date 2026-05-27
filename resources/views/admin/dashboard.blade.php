@@ -1,7 +1,7 @@
 @extends('layouts.system')
 
 @section('content')
-<h1 class="text-2xl font-bold text-gray-800 mb-6">Welcome, Admin</h1>
+<h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Welcome, Admin</h1>
 
 <!-- 🧾 Orders & Sales -->
 <div class="mb-10">
