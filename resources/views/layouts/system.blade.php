@@ -15,41 +15,48 @@
 
 <body class="font-sans antialiased bg-gray-100 text-gray-900" x-data="{ sidebarOpen: false }">
 
-  @include('layouts.navigation')
+  <div class="fixed top-0 w-full z-50">
+      @include('layouts.navigation')
+  </div>
 
-  <div class="min-h-screen flex relative">
+  @if(auth()->check())
+    <button 
+      x-show="!sidebarOpen"
+      @click="sidebarOpen = true" 
+      class="md:hidden absolute top-[13.5rem] left-6 z-[40] p-2 rounded shadow-md text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+      style="background-color: #2b0d0d; width: 40px; height: 40px;"
+    >
+      <i class="fa-solid fa-bars text-lg"></i>
+    </button>
+  @endif
+
+  <div class="pt-52 md:pt-32 flex min-h-screen">
     
     @if(auth()->check())
       <div 
-        :class="sidebarOpen ? 'fixed inset-0 z-40 flex' : 'hidden md:flex'" 
-        class="md:relative md:z-0"
+        x-show="sidebarOpen || window.innerWidth >= 768"
+        :class="sidebarOpen ? 'fixed top-32 left-0 bottom-0 z-50 w-full' : 'hidden md:block w-64 flex-shrink-0 items-start'"
+        @click.self="sidebarOpen = false"
       >
-        <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black opacity-50 md:hidden"></div>
-        
-        <div class="relative bg-white w-64 h-full shadow-lg overflow-y-auto">
+        <div 
+          class="md:hidden fixed inset-0 top-48 bg-black bg-opacity-20" 
+          @click="sidebarOpen = false"
+        ></div>
+
+        <div 
+          :class="sidebarOpen ? 'fixed top-48 left-0 h-[calc(100vh-8rem)] w-64 bg-white shadow-lg overflow-y-auto z-50' : 'sticky top-32 h-[calc(100vh-8rem)] w-64 bg-white shadow-lg overflow-y-auto z-30'"
+        >
             @include('layouts.sidebar')
         </div>
       </div>
     @endif
 
-    <div class="flex-1 w-full overflow-hidden relative">
+    <div class="flex-1 w-full min-w-0">
       
-      <!-- Mobile Sidebar Toggle Button -->
-      @if(auth()->check())
-        <button 
-          @click="sidebarOpen = !sidebarOpen" 
-          class="md:hidden absolute top-4 left-4 z-30 p-2 rounded shadow-md text-white"
-          style="background-color: #2b0d0d;"
-        >
-          <i class="fa-solid fa-bars"></i>
-        </button>
-      @endif
-
       @isset($header)
-        <header class="bg-white shadow">
-          <!-- Added padding-left for mobile to accommodate the button if needed -->
-          <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 {{ auth()->check() ? 'pl-16 md:pl-8' : '' }}">
-            {{ $header }}
+        <header class="mb-6 text-center">
+          <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <h1 class="text-2xl font-bold text-gray-800">{{ $header }}</h1>
           </div>
         </header>
       @endisset
@@ -57,18 +64,20 @@
       <main class="p-4 md:p-6">
         @yield('content')
       </main>
+
+      <footer class="bg-gray-900 text-white py-6 w-full overflow-x-hidden border-t border-gray-800 mt-auto">
+          <div class="w-full px-6 md:px-12">
+              <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+                  <p>© {{ date('Y') }} Carvado. All rights reserved.</p>
+                  <div class="flex gap-6">
+                      <a href="{{ url('/terms') }}" class="hover:text-white transition hover:underline">Terms</a>
+                      <a href="{{ url('/privacy') }}" class="hover:text-white transition hover:underline">Privacy</a>
+                  </div>
+              </div>
+          </div>
+      </footer>
     </div>
   </div>
-
-  <footer class="bg-gray-900 text-white py-6 border-t border-gray-800">
-    <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-        <p>© {{ date('Y') }} Carvado. All rights reserved.</p>
-        <div class="flex gap-6">
-            <a href="{{ url('/terms') }}" class="hover:text-white transition">Terms</a>
-            <a href="{{ url('/privacy') }}" class="hover:text-white transition">Privacy</a>
-        </div>
-    </div>
-  </footer>
 
   @livewireScripts
 </body>
