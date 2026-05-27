@@ -35,7 +35,7 @@
     @if(auth()->check())
       <div 
         x-show="sidebarOpen || window.innerWidth >= 768"
-        :class="sidebarOpen ? 'fixed top-32 left-0 bottom-0 z-50 w-full' : 'hidden md:block w-64 flex-shrink-0 items-start'"
+        :class="sidebarOpen ? 'fixed top-32 left-0 bottom-0 z-50 w-full' : 'hidden md:!block w-64 flex-shrink-0 items-start'"
         @click.self="sidebarOpen = false"
       >
         <div 
